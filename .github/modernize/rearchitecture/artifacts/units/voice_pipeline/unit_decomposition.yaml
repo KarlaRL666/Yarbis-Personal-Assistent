@@ -1,0 +1,11 @@
+unit: voice_pipeline
+commit: false
+candidate_splits:
+  - id: "app/api/v1/voice.py:34-101"
+    drivers: [protocol_split, concern_split]
+    rationale: "The endpoint validates multipart input, manages temporary files, invokes orchestration, translates exceptions, and schedules cleanup; upload handling is separable from assistant processing."
+    source_slice: {file: app/api/v1/voice.py, lines: [34, 101]}
+  - id: "app/services/orchestrator.py:57-86"
+    drivers: [execution_model_split, concern_split]
+    rationale: "Voice-specific STT acquisition and temporary file deletion precede the shared text orchestration pipeline and have distinct failure and resource-lifetime behavior."
+    source_slice: {file: app/services/orchestrator.py, lines: [57, 86]}

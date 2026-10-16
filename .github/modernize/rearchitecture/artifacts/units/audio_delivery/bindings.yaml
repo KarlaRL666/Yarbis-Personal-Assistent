@@ -1,0 +1,5 @@
+unit: audio_delivery
+bindings:
+  - {type: route-declaration, name: "GET /api/v1/voice/audio/{filename}", source_loc: "app/api/v1/voice.py:104", target: get_audio_file, must_appear_in_target: true, notes: "Returns FastAPI FileResponse."}
+runtime_config:
+  - {key: AUDIO_DIR, source_loc: "app/api/v1/voice.py:113", source: env, default_value: "static/audio", must_appear_in_target: true, notes: "Directory containing generated audio."}

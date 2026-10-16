@@ -1,0 +1,11 @@
+unit: root_info
+side_effects: []
+branches: []
+error_paths: []
+concurrency:
+  model: async
+  tx_boundary:
+    source_loc: "app/main.py:76"
+    scope: "No transaction; returns static metadata."
+    isolation: "not applicable"
+    must_preserve: true

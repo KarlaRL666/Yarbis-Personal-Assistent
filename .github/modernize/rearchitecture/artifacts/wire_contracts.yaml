@@ -1,0 +1,101 @@
+contracts:
+  - name: root metadata
+    unit: root_info
+    type: rest
+    stability: frozen
+    source_loc: "app/main.py:76"
+    contract:
+      method: GET
+      path: /
+      request: none
+      response: "JSON name, version, status, docs, and endpoint map"
+      error: "framework default errors"
+      auth: none
+    target_contract:
+      method: "GET / -> application metadata JSON"
+      notes: "Preserve keys and advertised endpoint paths."
+    semantic_divergence: []
+  - name: health check
+    unit: health_api
+    type: rest
+    stability: frozen
+    source_loc: "app/api/router.py:13"
+    contract:
+      method: GET
+      path: /api/v1/health
+      request: none
+      response: "{status: online, assistant: Yarbis, version: 1.0.0, ready: true}"
+      error: "framework default errors"
+      auth: none
+    target_contract:
+      method: "GET /api/v1/health -> health JSON"
+      notes: "Preserve readiness values and version field."
+    semantic_divergence: []
+  - name: text command processing
+    unit: command_api
+    type: rest
+    stability: frozen
+    source_loc: "app/api/v1/command.py:12"
+    contract:
+      method: POST
+      path: /api/v1/command/process
+      request: "CommandProcessRequest JSON"
+      response: "YarbisResponse"
+      error: "200 for pipeline outcomes; validation errors use FastAPI 422"
+      auth: none
+    target_contract:
+      method: "POST /api/v1/command/process(CommandProcessRequest) -> YarbisResponse"
+      notes: "Preserve optional audio flags, session_id, and device-control/conversational response shape."
+    semantic_divergence:
+      - {field: session_id, issue: "Default is default_session at the HTTP schema while orchestrator defaults to default internally.", source_loc: "app/schemas/request.py:12"}
+  - name: voice command processing
+    unit: voice_pipeline
+    type: rest
+    stability: frozen
+    source_loc: "app/api/v1/voice.py:21"
+    contract:
+      method: POST
+      path: /api/v1/voice/process
+      request: "multipart file plus session_id, user_id, wake-word and audio flags"
+      response: "YarbisResponse"
+      error: "400 unsupported extension; 500 processing failure; validation errors 422"
+      auth: none
+    target_contract:
+      method: "POST /api/v1/voice/process(multipart) -> YarbisResponse"
+      notes: "Preserve accepted extensions, temporary-file cleanup, transcription, and response audio options."
+    semantic_divergence:
+      - {field: audio_url, issue: "Relative URL is default so Android client must resolve it against baseUrl.", source_loc: "app/core/config.py:50"}
+  - name: generated audio delivery
+    unit: audio_delivery
+    type: file
+    stability: frozen
+    source_loc: "app/api/v1/voice.py:104"
+    contract:
+      method: GET
+      path: /api/v1/voice/audio/{filename}
+      request: "filename path parameter"
+      response: "audio/mpeg for .mp3, audio/wav otherwise"
+      error: "404 when safe filename does not exist"
+      auth: none
+    target_contract:
+      method: "GET /api/v1/voice/audio/{filename} -> FileResponse"
+      notes: "Apply basename normalization before filesystem lookup."
+    semantic_divergence:
+      - {field: filename, issue: "Path components are discarded via Path(filename).name, preventing traversal but changing requested names.", source_loc: "app/api/v1/voice.py:115"}
+  - name: session management
+    unit: session_api
+    type: rest
+    stability: frozen
+    source_loc: "app/api/v1/session.py:11"
+    contract:
+      method: "GET/DELETE"
+      path: "/api/v1/session and /api/v1/session/{session_id}/*"
+      request: "session_id path parameter where applicable"
+      response: "session history/context/list/clear JSON"
+      error: "framework default errors"
+      auth: none
+    target_contract:
+      method: "Preserve all four session routes and JSON keys."
+      notes: "Session state remains process-local unless a later design explicitly changes persistence."
+    semantic_divergence:
+      - {field: history, issue: "Expired or unknown sessions can be materialized by get_history/get_context but history endpoint returns an empty object for unknown sessions.", source_loc: "app/api/v1/session.py:22"}

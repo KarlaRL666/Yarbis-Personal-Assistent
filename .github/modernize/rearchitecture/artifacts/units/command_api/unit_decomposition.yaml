@@ -1,0 +1,7 @@
+unit: command_api
+commit: false
+candidate_splits:
+  - id: "app/services/orchestrator.py:88-199"
+    drivers: [concern_split, execution_model_split]
+    rationale: "The shared pipeline combines wake-word policy, session persistence, LLM/tool decisions, TTS generation, and response assembly; these concerns may evolve independently."
+    source_slice: {file: app/services/orchestrator.py, lines: [88, 199]}

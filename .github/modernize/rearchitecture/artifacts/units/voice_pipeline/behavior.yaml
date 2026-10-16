@@ -1,0 +1,21 @@
+unit: voice_pipeline
+side_effects:
+  - {source_loc: "app/utils/audio.py:28", effect: "Persists uploaded audio to a uniquely named temporary file.", must_preserve: true}
+  - {source_loc: "app/api/v1/voice.py:101", effect: "Schedules temporary upload cleanup after processing.", must_preserve: true}
+  - {source_loc: "app/services/stt_service.py:168", effect: "Transcribes audio through OpenAI or Google fallback.", must_preserve: true}
+  - {source_loc: "app/services/orchestrator.py:213", effect: "Writes synthesized MP3 to AUDIO_DIR when requested.", must_preserve: true}
+branches:
+  - {source_loc: "app/api/v1/voice.py:70", condition: "extension is unsupported", behavior: "Returns HTTP 400 before saving the upload.", must_preserve: true}
+  - {source_loc: "app/services/orchestrator.py:109", condition: "transcription is empty", behavior: "Returns no-speech response and optional audio.", must_preserve: true}
+  - {source_loc: "app/services/orchestrator.py:128", condition: "required wake word absent", behavior: "Returns rejection response without audio.", must_preserve: true}
+  - {source_loc: "app/services/orchestrator.py:190", condition: "voice input", behavior: "Includes original transcription in response.", must_preserve: true}
+error_paths:
+  - {source_loc: "app/api/v1/voice.py:91", trigger: "orchestrator raises non-HTTP exception", outcome: "Returns HTTP 500 and schedules cleanup.", contract: "detail contains processing error text.", must_preserve: true}
+  - {source_loc: "app/services/stt_service.py:194", trigger: "OpenAI STT failure", outcome: "Falls back to GoogleSpeechSTT.", contract: "Pipeline continues with a string transcription.", must_preserve: true}
+concurrency:
+  model: coroutine
+  tx_boundary:
+    source_loc: "app/api/v1/voice.py:101"
+    scope: "Upload processing and cleanup are request/background-task coordinated; no database transaction."
+    isolation: "filesystem/process-local"
+    must_preserve: true

@@ -1,0 +1,20 @@
+seams:
+  - id: "app/api/v1/voice.py:110"
+    description: "HTTP API returns generated local audio files to the external Kotlin/Android client."
+    source: inferred
+    cut_between:
+      migrated_side: voice_pipeline
+      frozen_side: audio_delivery
+    protocol_shift: {from: "JSON audio_url reference", to: "HTTP file response"}
+    frozen_side_rule: "audio_delivery contract MUST remain compatible with URLs emitted by voice_pipeline."
+    bridge_points:
+      - at: "voice_pipeline response assembly -> audio_delivery route"
+        from_form: "YarbisResponse.audio_url = /api/v1/voice/audio/{filename}"
+        to_form: "GET /api/v1/voice/audio/{filename} returns FileResponse"
+        mapping_rule: "Use the exact generated basename in audio_url; preserve the /api/v1/voice/audio/ prefix and serve the file from Settings.AUDIO_DIR."
+        edge_cases:
+          - "missing file -> 404"
+          - "path components are reduced to basename before lookup"
+        idempotency_retry: "GET is safe to retry while the generated file remains in AUDIO_DIR."
+        fallback: "If generation fails, return null audio_url and let the client use text_response."
+        must_preserve: true

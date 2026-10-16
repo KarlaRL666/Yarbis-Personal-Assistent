@@ -1,0 +1,7 @@
+unit: session_api
+commit: false
+candidate_splits:
+  - id: "app/api/v1/session.py:11-82"
+    drivers: [concern_split, lifecycle_split]
+    rationale: "Inspection routes and destructive reset route share a router but have different read versus mutation behavior and could evolve under separate operational policies."
+    source_slice: {file: app/api/v1/session.py, lines: [11, 82]}

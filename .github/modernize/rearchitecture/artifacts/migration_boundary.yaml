@@ -1,0 +1,29 @@
+user_intent:
+  raw_request: "Generate design context for the existing Yarbis application."
+  inferred_acceptance:
+    - "Provide source-anchored architecture and contract artifacts."
+    - "Do not change application behavior or commit to a target technology."
+  cleanup_required: false
+strategy: minimal_runtime
+runtime_reachable:
+  - app/main.py
+  - app/api/router.py
+  - app/api/v1/command.py
+  - app/api/v1/voice.py
+  - app/api/v1/session.py
+  - app/services/orchestrator.py
+  - app/services/session_service.py
+must_rewrite: []
+copy_as_is:
+  - app/
+  - clients/
+legacy_allowed_to_remain:
+  - venv/
+  - static/audio/
+defer_cleanup:
+  - "No migration target or cleanup request was supplied; preserve source unchanged."
+full_rewrite_reason: null
+implementation_rule: >
+  This is an analysis-only context capture. No source rewrite is authorized.
+  If a later migration is requested, derive implementation scope from a new
+  must_rewrite list rather than from source_anchors.

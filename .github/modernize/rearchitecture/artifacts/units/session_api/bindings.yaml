@@ -1,0 +1,7 @@
+unit: session_api
+bindings:
+  - {type: route-declaration, name: "Session router routes", source_loc: "app/api/v1/session.py:8", target: "session endpoints", must_appear_in_target: true, notes: "GET history/context/list and DELETE session."}
+  - {type: di-registration, name: "Depends(get_session_service)", source_loc: "app/api/v1/session.py:18", target: session_service, must_appear_in_target: true, notes: "Injects process singleton."}
+runtime_config:
+  - {key: SESSION_MAX_HISTORY_TURNS, source_loc: "app/core/config.py:47", source: env, default_value: "10", must_appear_in_target: true, notes: "Sliding window size."}
+  - {key: SESSION_TTL_MINUTES, source_loc: "app/core/config.py:48", source: env, default_value: "60", must_appear_in_target: true, notes: "Inactivity expiration."}

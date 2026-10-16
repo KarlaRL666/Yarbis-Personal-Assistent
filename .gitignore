@@ -1,0 +1,24 @@
+# Entorno virtual y Python
+venv/
+.venv/
+env/
+
+# Caché de Python y testing
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# Variables de entorno secretas
+.env
+
+# Archivos de audio generados dinámicamente
+static/audio/*.mp3
+static/audio/*.wav
+static/audio/*.m4a
+!static/audio/.gitkeep
+
+# IDEs
+.vscode/
+.idea/

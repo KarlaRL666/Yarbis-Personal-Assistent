@@ -1,0 +1,43 @@
+flows:
+  - name: conversation history into command pipeline
+    medium: static
+    key: "SessionService._sessions[session_id].messages"
+    writer:
+      unit: command_api
+      source_loc: "app/services/session_service.py:105"
+    reader:
+      unit: voice_pipeline
+      source_loc: "app/services/orchestrator.py:159"
+    pairing: matched
+    must_preserve: true
+    must_confirm: null
+    verification_hint: "Send two commands with one session_id and assert the second response can use prior context."
+    notes: "Both text and voice routes share the singleton SessionService; the state is process-local."
+  - name: semantic context exposed by session API
+    medium: static
+    key: "SessionHistory.context"
+    writer:
+      unit: command_api
+      source_loc: "app/services/session_service.py:128"
+    reader:
+      unit: session_api
+      source_loc: "app/api/v1/session.py:44"
+    pairing: matched
+    must_preserve: true
+    must_confirm: null
+    verification_hint: "Process a command, then GET /api/v1/session/{id}/context and compare last_command/action_type."
+    notes: "Context fields are updated only after LLM orchestration."
+  - name: generated audio file consumed by client
+    medium: file
+    key: "AUDIO_DIR/{generated filename}"
+    writer:
+      unit: voice_pipeline
+      source_loc: "app/services/orchestrator.py:213"
+    reader:
+      unit: audio_delivery
+      source_loc: "app/api/v1/voice.py:115"
+    pairing: matched
+    must_preserve: true
+    must_confirm: null
+    verification_hint: "Request a response with audio, then GET the returned audio_url."
+    notes: "Background cleanup and startup cleanup can remove files; URLs are intended for near-immediate consumption."

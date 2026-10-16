@@ -1,0 +1,19 @@
+unit: command_api
+side_effects:
+  - {source_loc: "app/services/session_service.py:105", effect: "Stores the cleaned user command in the session message history.", must_preserve: true}
+  - {source_loc: "app/services/session_service.py:111", effect: "Stores assistant response, tool calls, command, parameters, and action type in session state.", must_preserve: true}
+branches:
+  - {source_loc: "app/services/orchestrator.py:109", condition: "input text is empty", behavior: "Returns a conversational clarification and optionally synthesizes audio.", must_preserve: true}
+  - {source_loc: "app/services/orchestrator.py:128", condition: "wake word is required but not detected", behavior: "Returns a conversational rejection without invoking LLM.", must_preserve: true}
+  - {source_loc: "app/services/orchestrator.py:143", condition: "input contains only wake word", behavior: "Returns an acknowledgement asking for the command.", must_preserve: true}
+  - {source_loc: "app/services/llm_service.py:101", condition: "LLM emits tool call", behavior: "Returns device_control with command and structured parameters.", must_preserve: true}
+  - {source_loc: "app/services/llm_service.py:128", condition: "LLM emits no tool call", behavior: "Returns conversational_query with text and no command.", must_preserve: true}
+error_paths:
+  - {source_loc: "app/services/llm_service.py:132", trigger: "LLM unavailable, invalid key, quota, or request failure", outcome: "Falls back to local intent analysis.", contract: "Still returns YarbisResponse with 200 at route level.", must_preserve: true}
+concurrency:
+  model: coroutine
+  tx_boundary:
+    source_loc: "app/services/orchestrator.py:159"
+    scope: "No database transaction; session history is updated after LLM decision and before optional TTS."
+    isolation: "process-local dictionary semantics"
+    must_preserve: true

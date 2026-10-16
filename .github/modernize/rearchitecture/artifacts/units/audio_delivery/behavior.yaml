@@ -1,0 +1,14 @@
+unit: audio_delivery
+side_effects: []
+branches:
+  - {source_loc: "app/api/v1/voice.py:115", condition: "requested basename does not exist or is not a file", behavior: "Returns HTTP 404.", must_preserve: true}
+  - {source_loc: "app/api/v1/voice.py:121", condition: "filename ends with .mp3", behavior: "Serves audio/mpeg; otherwise audio/wav.", must_preserve: true}
+error_paths:
+  - {source_loc: "app/api/v1/voice.py:115", trigger: "missing generated audio", outcome: "404 JSON detail naming safe filename.", contract: "HTTP 404.", must_preserve: true}
+concurrency:
+  model: async
+  tx_boundary:
+    source_loc: "app/api/v1/voice.py:110"
+    scope: "No transaction; reads a generated file."
+    isolation: "filesystem"
+    must_preserve: true

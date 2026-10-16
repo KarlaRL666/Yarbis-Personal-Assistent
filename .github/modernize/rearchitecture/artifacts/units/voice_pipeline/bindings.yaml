@@ -1,0 +1,8 @@
+unit: voice_pipeline
+bindings:
+  - {type: route-declaration, name: "POST /api/v1/voice/process", source_loc: "app/api/v1/voice.py:21", target: process_voice_audio, must_appear_in_target: true, notes: "Multipart form endpoint under /api/v1."}
+  - {type: di-registration, name: "Depends(get_orchestrator)", source_loc: "app/api/v1/voice.py:61", target: orchestrator, must_appear_in_target: true, notes: "Injects singleton orchestrator."}
+runtime_config:
+  - {key: STT_PROVIDER, source_loc: "app/core/config.py:32", source: env, default_value: "openai", must_appear_in_target: true, notes: "Selects STT implementation/fallback."}
+  - {key: TTS_PROVIDER, source_loc: "app/core/config.py:35", source: env, default_value: "edge_tts", must_appear_in_target: true, notes: "Selects TTS implementation."}
+  - {key: USE_RELATIVE_AUDIO_URL, source_loc: "app/core/config.py:50", source: env, default_value: "True", must_appear_in_target: true, notes: "Controls Android-compatible audio URL form."}

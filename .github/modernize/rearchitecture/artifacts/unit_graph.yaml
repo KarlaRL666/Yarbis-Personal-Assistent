@@ -1,0 +1,142 @@
+units:
+  - name: root_info
+    trigger: api
+    trigger_detail: "GET /"
+    source_anchors:
+      - path: app/main.py
+        line: 76
+    exported_signature:
+      - method: "dict root()"
+        source_loc: "app/main.py:77"
+        stability: frozen
+    dynamic_entrypoints:
+      - target: "app.main:app"
+        mechanism: convention
+        source_loc: "app/main.py:94"
+    depends_on:
+      - unit: health_api
+        via: "advertises /api/v1/health"
+    shared_refs:
+      - module: settings
+        used_fields: [APP_NAME, APP_ENV, ASSISTANT_NAME]
+
+  - name: health_api
+    trigger: api
+    trigger_detail: "GET /api/v1/health"
+    source_anchors:
+      - path: app/api/router.py
+        line: 13
+    exported_signature:
+      - method: "dict health_check()"
+        source_loc: "app/api/router.py:13"
+        stability: frozen
+    dynamic_entrypoints: []
+    depends_on: []
+    shared_refs:
+      - module: api_router
+        used_fields: [prefix, include_router]
+
+  - name: command_api
+    trigger: api
+    trigger_detail: "POST /api/v1/command/process"
+    source_anchors:
+      - path: app/api/v1/command.py
+        line: 12
+    exported_signature:
+      - method: "YarbisResponse process_text_command(CommandProcessRequest, YarbisOrchestrator)"
+        source_loc: "app/api/v1/command.py:24"
+        stability: frozen
+    dynamic_entrypoints:
+      - target: "app.api.v1.command.router"
+        mechanism: annotation-scan
+        source_loc: "app/api/router.py:7"
+    depends_on:
+      - unit: voice_pipeline
+        via: "YarbisOrchestrator.process_text_command"
+      - unit: session_api
+        via: "session_id passed into orchestrator"
+    shared_refs:
+      - module: settings
+        used_fields: [REQUIRE_WAKE_WORD]
+      - module: response_contract
+        used_fields: [action_type, command, parameters, text_response, audio_url, audio_base64, transcription, session_id]
+
+  - name: voice_pipeline
+    trigger: api
+    trigger_detail: "POST /api/v1/voice/process"
+    source_anchors:
+      - path: app/api/v1/voice.py
+        line: 21
+    exported_signature:
+      - method: "YarbisResponse process_voice_audio(BackgroundTasks, UploadFile, session_id, user_id, require_wake_word, generate_audio, include_audio_base64, YarbisOrchestrator)"
+        source_loc: "app/api/v1/voice.py:34"
+        stability: frozen
+    dynamic_entrypoints:
+      - target: "app.api.v1.voice.router"
+        mechanism: annotation-scan
+        source_loc: "app/api/router.py:6"
+    depends_on:
+      - unit: command_api
+        via: "shared YarbisOrchestrator pipeline"
+      - unit: audio_delivery
+        via: "generated audio URL"
+      - unit: session_api
+        via: "session_id passed into orchestrator"
+    shared_refs:
+      - module: settings
+        used_fields: [AUDIO_DIR, REQUIRE_WAKE_WORD]
+      - module: response_contract
+        used_fields: [action_type, command, parameters, text_response, audio_url, audio_base64, transcription, session_id]
+      - module: audio_utilities
+        used_fields: [SUPPORTED_AUDIO_EXTENSIONS, is_supported_audio_extension, save_upload_to_temp, remove_file_silent]
+
+  - name: audio_delivery
+    trigger: api
+    trigger_detail: "GET /api/v1/voice/audio/{filename}"
+    source_anchors:
+      - path: app/utils/audio.py
+        line: 55
+    exported_signature:
+      - method: "FileResponse get_audio_file(filename)"
+        source_loc: "app/api/v1/voice.py:110"
+        stability: frozen
+    dynamic_entrypoints:
+      - target: "app.api.v1.voice.router"
+        mechanism: annotation-scan
+        source_loc: "app/api/router.py:6"
+    depends_on: []
+    shared_refs:
+      - module: settings
+        used_fields: [AUDIO_DIR]
+      - module: audio_utilities
+        used_fields: [get_audio_url]
+
+  - name: session_api
+    trigger: api
+    trigger_detail: "GET /api/v1/session, GET /api/v1/session/{session_id}/history, GET /api/v1/session/{session_id}/context, DELETE /api/v1/session/{session_id}"
+    source_anchors:
+      - path: app/services/session_service.py
+        line: 58
+    exported_signature:
+      - method: "Dict[str, Any] get_session_history(session_id, SessionService)"
+        source_loc: "app/api/v1/session.py:17"
+        stability: frozen
+      - method: "Dict[str, Any] get_session_context(session_id, SessionService)"
+        source_loc: "app/api/v1/session.py:40"
+        stability: frozen
+      - method: "Dict[str, Any] clear_session_memory(session_id, SessionService)"
+        source_loc: "app/api/v1/session.py:58"
+        stability: frozen
+      - method: "Dict[str, Any] list_sessions(SessionService)"
+        source_loc: "app/api/v1/session.py:77"
+        stability: frozen
+    dynamic_entrypoints:
+      - target: "app.api.v1.session.router"
+        mechanism: annotation-scan
+        source_loc: "app/api/router.py:8"
+    depends_on: []
+    shared_refs:
+      - module: settings
+        used_fields: [SESSION_MAX_HISTORY_TURNS, SESSION_TTL_MINUTES]
+      - module: session_store
+        used_fields: [_sessions, get_history, get_context, clear_session, get_session_info, list_active_sessions]

@@ -1,0 +1,11 @@
+unit: health_api
+side_effects: []
+branches: []
+error_paths: []
+concurrency:
+  model: async
+  tx_boundary:
+    source_loc: "app/api/router.py:13"
+    scope: "No transaction; returns static readiness metadata."
+    isolation: "not applicable"
+    must_preserve: true

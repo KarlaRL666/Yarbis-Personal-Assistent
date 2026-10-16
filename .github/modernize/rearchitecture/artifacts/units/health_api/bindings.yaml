@@ -1,0 +1,4 @@
+unit: health_api
+bindings:
+  - {type: route-declaration, name: "GET /api/v1/health", source_loc: "app/api/router.py:13", target: health_check, must_appear_in_target: true, notes: "Included under the /api/v1 router."}
+runtime_config: []

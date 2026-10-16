@@ -1,0 +1,5 @@
+unit: root_info
+bindings:
+  - {type: route-declaration, name: "GET /", source_loc: "app/main.py:76", target: root, must_appear_in_target: true, notes: "Registered directly on FastAPI application factory."}
+runtime_config:
+  - {key: APP_NAME, source_loc: "app/main.py:79", source: env, default_value: "Yarbis Backend", must_appear_in_target: true, notes: "Returned as application name."}

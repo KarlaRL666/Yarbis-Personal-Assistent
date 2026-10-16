@@ -1,0 +1,91 @@
+modules:
+  - name: settings
+    kind: config
+    source_loc: "app/core/config.py:7"
+    used_by_units: [root_info, command_api, voice_pipeline, audio_delivery, session_api]
+    fields:
+      - {name: APP_NAME, type: str}
+      - {name: APP_ENV, type: str}
+      - {name: ASSISTANT_NAME, type: str}
+      - {name: REQUIRE_WAKE_WORD, type: bool}
+      - {name: AUDIO_DIR, type: pathlib.Path}
+      - {name: SESSION_MAX_HISTORY_TURNS, type: int}
+      - {name: SESSION_TTL_MINUTES, type: int}
+    god_class: false
+    split_candidate: false
+    migration_strategy: wrap
+    notes: "Singleton pydantic-settings object supplies environment-backed runtime configuration."
+  - name: api_router
+    kind: config
+    source_loc: "app/api/router.py:4"
+    used_by_units: [health_api]
+    fields:
+      - {name: prefix, type: str}
+      - {name: include_router, type: callable}
+    god_class: false
+    split_candidate: false
+    migration_strategy: copy
+    notes: "FastAPI router composition and version prefix."
+  - name: response_contract
+    kind: dto
+    source_loc: "app/schemas/response.py:6"
+    used_by_units: [command_api, voice_pipeline]
+    fields:
+      - {name: action_type, type: ActionType}
+      - {name: command, type: Optional[str]}
+      - {name: parameters, type: Dict[str, Any]}
+      - {name: text_response, type: str}
+      - {name: audio_url, type: Optional[str]}
+      - {name: audio_base64, type: Optional[str]}
+      - {name: transcription, type: Optional[str]}
+      - {name: session_id, type: Optional[str]}
+    god_class: false
+    split_candidate: false
+    migration_strategy: wrap
+    notes: "Stable JSON DTO consumed by Kotlin Gson client."
+  - name: audio_utilities
+    kind: utility
+    source_loc: "app/utils/audio.py:14"
+    used_by_units: [voice_pipeline, audio_delivery]
+    fields:
+      - {name: SUPPORTED_AUDIO_EXTENSIONS, type: Set[str]}
+      - {name: is_supported_audio_extension, type: callable}
+      - {name: save_upload_to_temp, type: async callable}
+      - {name: remove_file_silent, type: callable}
+      - {name: get_audio_url, type: callable}
+    god_class: false
+    split_candidate: false
+    migration_strategy: copy
+    notes: "Shared filesystem and URL helpers; generated files are temporary and cleaned by lifecycle/background tasks."
+  - name: session_store
+    kind: store
+    source_loc: "app/services/session_service.py:58"
+    used_by_units: [session_api, command_api, voice_pipeline]
+    fields:
+      - {name: _sessions, type: Dict[str, SessionHistory]}
+      - {name: get_history, type: callable}
+      - {name: get_context, type: callable}
+      - {name: clear_session, type: callable}
+      - {name: get_session_info, type: callable}
+      - {name: list_active_sessions, type: callable}
+    god_class: false
+    split_candidate: false
+    migration_strategy: wrap
+    notes: "Process-local TTL store used by orchestration and session inspection APIs."
+  - name: orchestrator
+    kind: god-class
+    source_loc: "app/services/orchestrator.py:17"
+    used_by_units: [command_api, voice_pipeline]
+    fields:
+      - {name: process_text_command, type: async callable}
+      - {name: process_voice_audio, type: async callable}
+      - {name: _orchestrate_pipeline, type: async callable}
+      - {name: _synthesize_if_requested, type: async callable}
+      - {name: stt, type: BaseSTTService}
+      - {name: tts, type: BaseTTSService}
+      - {name: llm, type: LLMService}
+      - {name: session, type: SessionService}
+    god_class: true
+    split_candidate: true
+    migration_strategy: split
+    notes: "Coordinates STT, wake-word validation, session state, LLM/tool use, TTS, and response assembly."

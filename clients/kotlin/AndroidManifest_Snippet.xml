@@ -1,0 +1,37 @@
+<!--
+    Configuración recomendada para AndroidManifest.xml de la aplicación Android
+    Coloque estos permisos y servicios dentro de <manifest> y <application> respectivamente.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Permisos de red e Internet -->
+    <uses-permission android:name="android.intent.action.INTERNET" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- Permiso esencial para la Burbuja Flotante sobre otras aplicaciones -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
+    <!-- Permiso esencial para captura de audio y wake word en segundo plano -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Permisos para acciones de hardware gestionadas por DeviceActionHandler -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.SET_ALARM" />
+    <uses-permission android:name="android.permission.CALL_PHONE" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+
+    <application
+        android:usesCleartextTraffic="true"> <!-- Permite conectar a http://10.0.2.2:8000 en desarrollo -->
+
+        <!-- Registro del Servicio en Primer Plano con tipo micrófono -->
+        <service
+            android:name="com.yarbis.client.service.YarbisVoiceService"
+            android:exported="false"
+            android:foregroundServiceType="microphone" />
+
+    </application>
+</manifest>

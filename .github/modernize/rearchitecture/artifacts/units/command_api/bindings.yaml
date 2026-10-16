@@ -1,0 +1,6 @@
+unit: command_api
+bindings:
+  - {type: route-declaration, name: "POST /api/v1/command/process", source_loc: "app/api/v1/command.py:12", target: process_text_command, must_appear_in_target: true, notes: "FastAPI APIRouter prefix /command under /api/v1."}
+  - {type: di-registration, name: "Depends(get_orchestrator)", source_loc: "app/api/v1/command.py:26", target: orchestrator, must_appear_in_target: true, notes: "Injects singleton orchestrator."}
+runtime_config:
+  - {key: REQUIRE_WAKE_WORD, source_loc: "app/core/config.py:22", source: env, default_value: "False", must_appear_in_target: true, notes: "Used when request override is null."}

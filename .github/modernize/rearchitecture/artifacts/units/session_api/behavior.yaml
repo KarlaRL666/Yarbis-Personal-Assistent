@@ -1,0 +1,14 @@
+unit: session_api
+side_effects:
+  - {source_loc: "app/services/session_service.py:156", effect: "Deletes all in-memory messages and context for a session.", must_preserve: true}
+branches:
+  - {source_loc: "app/api/v1/session.py:22", condition: "session does not exist", behavior: "History endpoint returns zero counts, empty messages, and empty context.", must_preserve: true}
+  - {source_loc: "app/services/session_service.py:69", condition: "session missing or expired", behavior: "Creates a new session on history/context access.", must_preserve: true}
+error_paths: []
+concurrency:
+  model: sync
+  tx_boundary:
+    source_loc: "app/services/session_service.py:69"
+    scope: "Dictionary mutations and TTL cleanup are process-local; no database transaction."
+    isolation: "in-process object memory"
+    must_preserve: true
